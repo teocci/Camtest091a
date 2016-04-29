@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="filter_values">
+        <item>gaussian-blur</item>
+        <item>box-blur</item>
+        <item>emboss</item>
+        <item>sharpen</item>
+        <item>edge-detection</item>
+    </string-array>
+    
+    <string-array name="resolutions">
+        <item>320x240</item>
+        <item>640x480</item>
+        <item>800x480</item>        
+    </string-array>
+
+    <string-array name="quality">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+        <item>24</item>
+        <item>25</item>
+        <item>26</item>
+        <item>27</item>
+        <item>28</item>
+        <item>29</item>
+        <item>30</item>
+        <item>31</item>
+        <item>32</item>
+        <item>33</item>
+        <item>34</item>
+        <item>35</item>
+        <item>36</item>
+        <item>37</item>
+        <item>38</item>
+        <item>39</item>
+        <item>40</item>
+        <item>41</item>
+        <item>42</item>
+        <item>43</item>
+        <item>44</item>
+        <item>45</item>
+        <item>46</item>
+        <item>47</item>
+        <item>48</item>
+        <item>49</item>
+        <item>50</item>
+        <item>51</item>
+        <item>52</item>
+        <item>53</item>
+        <item>54</item>
+        <item>55</item>
+        <item>56</item>
+        <item>57</item>
+        <item>58</item>
+        <item>59</item>
+        <item>60</item>
+        <item>61</item>
+        <item>62</item>
+        <item>63</item>
+        <item>64</item>
+        <item>65</item>
+        <item>66</item>
+        <item>67</item>
+        <item>68</item>
+        <item>69</item>
+        <item>70</item>
+        <item>71</item>
+        <item>72</item>
+        <item>73</item>
+        <item>74</item>
+        <item>75</item>
+        <item>76</item>
+        <item>77</item>
+        <item>78</item>
+        <item>79</item>
+        <item>80</item>
+        <item>81</item>
+        <item>82</item>
+        <item>83</item>
+        <item>84</item>
+        <item>85</item>
+        <item>86</item>
+        <item>87</item>
+        <item>88</item>
+        <item>89</item>
+        <item>90</item>
+        <item>91</item>
+        <item>92</item>
+        <item>93</item>
+        <item>94</item>
+        <item>95</item>
+        <item>96</item>
+        <item>97</item>
+        <item>98</item>
+        <item>99</item>
+        <item>100</item>
+    </string-array>
+
+
+
+
+
+
+
+    <string-array name="entries_list_picture_size">
+        <item>Small</item>
+        <item>Normal</item>
+        <item>Medium</item>
+        <item>Large</item>
+        <item>Original</item>
+        <item>Custom</item>
+    </string-array>
+    <!-- attention when changing this - opensmartcam setup sets this to "3" -->
+    <string-array name="entryvalues_list_picture_size">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+    <string-array name="entries_list_camera_mode">
+        <item>Manual (tap to take picture)</item>
+        <item>Normal (with preview, app running)</item>
+        <item>Semi-Background (full cam features, wakeup)</item>
+        <item>Background (fast snapshots, hidden)</item>
+    </string-array>
+    <string-array name="entryvalues_list_camera_mode">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="entries_list_camera_mode_no_hiddenmode">
+        <item>Manual (tap to take picture)</item>
+        <item>Normal (with preview, app running)</item>
+        <item>Semi-Background (full cam features, wakeup)</item>
+    </string-array>
+
+    <string-array name="entryvalues_list_camera_mode_no_hiddenmode">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="entries_imprintalign">
+        <item>Left</item>
+        <item>Center</item>
+        <item>Right</item>
+    </string-array>
+    <string-array name="entryvalues_imprintalign">
+        <item>LEFT</item>
+        <item>CENTER</item>
+        <item>RIGHT</item>
+    </string-array>
+
+    <string-array name="entries_picscale">
+        <item>Letterbox</item>
+        <item>No border (crop)</item>
+        <item>Stretch</item>
+        <item>Original (camera res)</item>
+    </string-array>
+    <string-array name="entryvalues_picscale">
+        <item>LETTERBOX</item>
+        <item>CROP</item>
+        <item>STRETCH</item>
+        <item>NOSCALE</item>
+    </string-array>
+</resources>

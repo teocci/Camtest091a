@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/device_preferences">
+        <CheckBoxPreference
+            android:key="@string/key_pref_nativeyuv"
+            android:title="@string/nativeyuv"
+            android:defaultValue="false"
+            android:summary="@string/help_nativeyuv"
+            />
+        <ListPreference
+            android:title="@string/resolution"
+            android:summary="@string/help_resolution"
+            android:key="@string/key_pref_resolution"
+            android:defaultValue="320x240"
+            android:entries="@array/resolutions"
+            android:entryValues="@array/resolutions"
+            />
+        <SeekBarPreference
+            android:title="@string/quality"
+            android:summary="@string/help_resolution"
+            android:key="@string/key_pref_jpeg_quality"
+            android:defaultValue="80"
+            android:entries="@array/quality"
+            android:entryValues="@array/quality"
+            />
+        <CheckBoxPreference
+            android:key="@string/key_pref_draw_fps"
+            android:title="@string/draw_fps"
+            android:defaultValue="false"
+            android:summary="@string/help_draw_fps"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/image_effects">
+        <CheckBoxPreference
+            android:key="@string/key_pref_use_java_vj"
+            android:title="@string/use_java_vj"
+            android:defaultValue="false"
+            android:summary="@string/use_java_vj_help"
+            />
+
+        <EditTextPreference
+            android:key="@string/key_ar_max_faces"
+            android:title="@string/ar_max_faces"
+            android:summary="@string/help_ar_max_faces"
+            android:defaultValue="1"
+            android:dependency="@string/key_pref_use_java_vj"
+            />
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="@string/http_preferences">
+        <CheckBoxPreference
+            android:key="@string/key_pref_http_server"
+            android:title="@string/start_http_server"
+            android:defaultValue="true"
+            android:summary="@string/help_start_http_server"
+            />
+        <EditTextPreference
+            android:key="@string/key_pref_http_local_port"
+            android:title="@string/http_local_port"
+            android:defaultValue="8080"
+            android:summary="@string/help_http_local_port"/>
+    </PreferenceCategory>
+</PreferenceScreen>
