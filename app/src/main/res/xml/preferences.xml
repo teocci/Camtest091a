@@ -32,20 +32,18 @@
             />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/image_effects">
+    <PreferenceCategory android:title="@string/camera_preferences">
         <CheckBoxPreference
-            android:key="@string/key_pref_use_java_vj"
-            android:title="@string/use_java_vj"
+            android:key="@string/key_pref_camera_index_def"
+            android:title="@string/frontcam_on"
             android:defaultValue="false"
-            android:summary="@string/use_java_vj_help"
+            android:summary="@string/help_frontcam"
             />
-
-        <EditTextPreference
-            android:key="@string/key_ar_max_faces"
-            android:title="@string/ar_max_faces"
-            android:summary="@string/help_ar_max_faces"
-            android:defaultValue="1"
-            android:dependency="@string/key_pref_use_java_vj"
+        <CheckBoxPreference
+            android:key="@string/key_pref_flash_light_def"
+            android:title="@string/flash_light"
+            android:defaultValue="false"
+            android:summary="@string/help_flash_light"
             />
     </PreferenceCategory>
 

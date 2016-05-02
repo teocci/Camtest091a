@@ -33,6 +33,8 @@
     <string name="key_pref_nativeyuv">key_pref_nativeyuv</string>
     <string name="key_pref_jpeg_quality">key_pref_jpeg_quality</string>
     <string name="key_pref_preview_size_index_def">key_pref_preview_size_index_def</string>
+    <string name="key_pref_camera_index_def">key_pref_camera_index_def</string>
+    <string name="key_pref_flash_light_def">key_pref_flash_light_def</string>
     <string name="key_pref_server">key_pref_server</string>
     <string name="key_pref_local_port">key_pref_local_port</string>
     <string name="key_pref_client">key_pref_client</string>
@@ -83,17 +85,26 @@
     <string name="filter_list">List of filters</string>
     <string name="filter_list_help">Choose one of the filters to be applied to image</string>
 
-    <string name="help_nativeyuv">Use the native library to decode YUV to RGB. Disable this option if you are experiencing problems</string>
+
     <string name="streaming_on">Stop Streaming</string>
     <string name="streaming_off">Start Streaming</string>
-    <string name="frontcam_on">Use Rear Cam</string>
-    <string name="frontcam_off">Use Front Cam</string>
+    <string name="frontcam_off">Use Rear Cam</string>
+
+
     <string name="preferences">Preferences</string>
     <string name="focus">Focus Camera</string>
 
     <string name="device_preferences">Device Preferences</string>
     <string name="nativeyuv">Native YUV2RGB</string>
+    <string name="help_nativeyuv">Use the native library to decode YUV to RGB. Disable this option if you are experiencing problems</string>
     <string name="quality">Quality</string>
+    <string name="help_quality">MJPG quality is a characteristic of video transmission/processing system, a formal or informal measure of perceived video degradation</string>
+
+    <string name="camera_preferences">Camera Options</string>
+    <string name="frontcam_on">Use Front Cam</string>
+    <string name="help_frontcam">Use the Front Camera, which facing is the same as that of the screen.</string>
+    <string name="flash_light">Flash Light</string>
+    <string name="help_flash_light">Activate the flash Light</string>
 
     <string name="start_server">Start Server</string>
     <string name="stop_server">Stop Server</string>

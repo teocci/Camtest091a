@@ -23,10 +23,8 @@ import com.kseek.camjpeg.net.http.MJpegHttpStreamer;
 import com.kseek.camjpeg.utils.PreferenceHelper;
 import com.kseek.camjpeg.utils.Utilities;
 
-import java.util.List;
 import java.util.Locale;
 
-import static com.kseek.camjpeg.utils.Utilities.LogE;
 import static com.kseek.camjpeg.utils.Utilities.LogI;
 
 public final class StreamCameraActivity extends Activity
@@ -76,7 +74,7 @@ public final class StreamCameraActivity extends Activity
     private int width = 320;
     private int height = 240;
 
-    final static int defaultHttpPort = 8080;
+    static int httpPort = 8080;
 
 
     public StreamCameraActivity()
@@ -183,27 +181,15 @@ public final class StreamCameraActivity extends Activity
         return true;
     }
 
-    /*protected void startHttp()
+    protected void getPreferedResolution()
     {
-        try {
-            boolean startHttp =
-                    preferenceHelper
-                            .booleanPreference(R.string.key_pref_http_server, true);
-            if (!startHttp) {
-                return;
-            }
-
-
-            MotionJpegStreamer mjpgStreamer = new MotionJpegStreamer();
-            mImageGraph.addImageSink(mjpgStreamer);
-
-            HttpServer srv = new HttpServer(httpPort);
-            srv.addHandler("video.jpg", mjpgStreamer);
-        } catch (Exception e) {
-            LogE("failed to start HTTP server >> " + e);
-        }
-    }*/
-
+        String resolutionString =
+                preferenceHelper
+                        .stringPreference(R.string.key_pref_resolution, "320x240");
+        String WnH[] = resolutionString.split("x");
+        width = Integer.valueOf(WnH[0]);
+        height = Integer.valueOf(WnH[1]);
+    }
 
     public void releaseLocks()
     {
@@ -218,26 +204,17 @@ public final class StreamCameraActivity extends Activity
         }
     }
 
-    protected void getPreferedResolution()
-    {
-        String resolutionString =
-                preferenceHelper
-                        .stringPreference(R.string.key_pref_resolution, "320x240");
-        String WnH[] = resolutionString.split("x");
-        width = Integer.valueOf(WnH[0]);
-        height = Integer.valueOf(WnH[1]);
-    }
-
-
     private void tryStartCameraStreamer()
     {
         if (running && previewDisplayCreated && sharedPreferences != null) {
             cameraStreamer = new CameraStreamer(cameraIndex,
                     useFlashLight,
-                    defaultHttpPort,
+                    httpPort,
                     previewSizeIndex,
                     jpegQuality,
-                    previewDisplay);
+                    previewDisplay,
+                    width,
+                    height);
             cameraStreamer.start();
         }
     }
@@ -303,22 +280,15 @@ public final class StreamCameraActivity extends Activity
 
     private final void updatePrefCacheAndUi()
     {
-        cameraIndex = getPrefInt(PREF_CAMERA, PREF_CAMERA_INDEX_DEF);
+        cameraIndex = preferenceHelper
+                .booleanPreference(R.string.key_pref_camera_index_def, false) ? 0 : 1;
 
-        if (hasFlashLight()) {
-            if (sharedPreferences != null) {
-                useFlashLight = sharedPreferences.getBoolean(PREF_FLASH_LIGHT, PREF_FLASH_LIGHT_DEF);
-            } else {
-                useFlashLight = PREF_FLASH_LIGHT_DEF;
-            }
-        } else {
-            useFlashLight = false;
-        }
+        useFlashLight = (!hasFlashLight()) ? false : preferenceHelper
+                .booleanPreference(R.string.key_pref_flash_light_def, false);
 
-        int httpPort =
-                preferenceHelper
-                        .intPreference(R.string.key_pref_http_local_port,
-                                defaultHttpPort);
+        httpPort = Integer.valueOf(preferenceHelper
+                .intPreference(R.string.key_pref_http_local_port,
+                        8080));
 
         // The port must be in the range [1024 65535]
         if (httpPort < 1024)
@@ -343,6 +313,7 @@ public final class StreamCameraActivity extends Activity
         }
 
         displayIpAddress();
+        getPreferedResolution();
         //mIpAddressView.setText("http://" + ipAddress + ":" + httpPort + "/");
     }
 

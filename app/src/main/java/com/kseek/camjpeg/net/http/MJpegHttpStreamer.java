@@ -2,7 +2,6 @@ package com.kseek.camjpeg.net.http;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -21,13 +20,15 @@ public final class MJpegHttpStreamer
     private final static String UUID_MJPG = "7b3cc56e5f51db803f790dad720ed50a";
     private final static String BOUNDARY_MJPG = "--" + UUID_MJPG;
 
-
     private final static String MINE_MJPG =
             "multipart/x-mixed-replace;boundary=" + UUID_MJPG;
     private final static String CACHE_CONTROL =
             "Cache-Control: no-store"
                     + ", no-cache, must-revalidate"
                     + ", pre-check=0, post-check=0, max-age=0";
+
+    private final static String ACCESS_CONTROL =
+            "Access-Control-Allow-Origin:*";
 
     private final static byte EOL[] = {(byte) '\r', (byte) '\n'};
 
@@ -156,6 +157,7 @@ public final class MJpegHttpStreamer
                 serverSocket = null;
                 stream = new DataOutputStream(socket.getOutputStream());
                 headerMJPG(stream);
+                headerBoundary(stream);
                 stream.flush();
 
                 while (running) {
@@ -189,15 +191,19 @@ public final class MJpegHttpStreamer
                         newJpeg = false;
                     }
 
-                    stream.writeBytes(
+                    /*stream.writeBytes(
                             "Content-type: image/jpeg\r\n"
                                     + "Content-Length: " + length + "\r\n"
                                     + "X-Timestamp:" + timestamp + "\r\n"
                                     + "\r\n"
-                    );
-                    stream.write(buffer, 0, length);  /* the 0 is the offset */
-                    stream.writeBytes(BOUNDARY_LINES);
+                    );*/
+
+                    headerJPG(stream, length, timestamp);
+
+                    //headerBoundary(stream);
+                    //stream.writeBytes(BOUNDARY_LINES);
                     stream.flush();
+                    stream.write(buffer, 0, length);  /* the 0 is the offset */
                 }
             }
             catch (final IOException exceptionWhileStreaming) {
@@ -234,6 +240,9 @@ public final class MJpegHttpStreamer
 
     protected void headerMJPG(DataOutputStream ps) throws IOException
     {
+        ps.writeBytes("HTTP/1.0 200 OK");
+        ps.write(EOL);
+
         ps.writeBytes("Connection: Close");
         ps.write(EOL);
 
@@ -258,15 +267,25 @@ public final class MJpegHttpStreamer
         ps.write(EOL);
     }
 
-    protected void headerJPG(DataOutputStream ps) throws IOException
+    protected void headerJPG(DataOutputStream ps, int length, long timestamp) throws IOException
     {
         ps.write(EOL);
         ps.writeBytes(BOUNDARY_MJPG);
         ps.write(EOL);
         ps.writeBytes("Content-type: image/jpeg");
         ps.write(EOL);
+        ps.writeBytes("Content-Length: " + length);
         ps.write(EOL);
+        ps.writeBytes("X-Timestamp:" + timestamp);
+        ps.write(EOL);
+        ps.write(EOL);
+    }
 
+    protected void headerBoundary(DataOutputStream ps) throws IOException
+    {
+        ps.write(EOL);
+        ps.writeBytes(BOUNDARY_MJPG);
+        ps.write(EOL);
     }
 
     private void acceptAndStream() throws IOException

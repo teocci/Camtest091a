@@ -33,6 +33,8 @@ import com.kseek.camjpeg.net.http.MJpegHttpStreamer;
 import java.io.IOException;
 import java.util.List;
 
+import static android.hardware.Camera.*;
+
 final class CameraStreamer extends Object
 {
     private static final String TAG = CameraStreamer.class.getSimpleName();
@@ -51,6 +53,8 @@ final class CameraStreamer extends Object
     private final int previewSizeIndex;
     private final int jpegQuality;
     private final SurfaceHolder previewDisplay;
+    private int width = Integer.MIN_VALUE;
+    private int height = Integer.MIN_VALUE;
 
     private boolean running = false;
     private Looper looper = null;
@@ -64,11 +68,12 @@ final class CameraStreamer extends Object
     private MemoryOutputStream jpegOutputStream = null;
     private MJpegHttpStreamer jpegHttpStreamer = null;
 
+
     private long numFrames = 0L;
     private long lastTimestamp = Long.MIN_VALUE;
 
     public CameraStreamer(final int cameraIndex, final boolean useFlashLight, final int httpPort,
-            final int previewSizeIndex, final int jpegQuality, final SurfaceHolder previewDisplay)
+            final int previewSizeIndex, final int jpegQuality, final SurfaceHolder previewDisplay, final int width, final int height)
     {
         super();
 
@@ -82,6 +87,8 @@ final class CameraStreamer extends Object
         this.previewSizeIndex = previewSizeIndex;
         this.jpegQuality = jpegQuality;
         this.previewDisplay = previewDisplay;
+        this.width = width;
+        this.height = height;
     }
 
     private final class WorkHandler extends Handler
@@ -174,13 +181,18 @@ final class CameraStreamer extends Object
     private void startStreamingIfRunning() throws IOException
     {
         // Throws RuntimeException if the camera is currently opened by another application.
-        final Camera rawCamera = Camera.open(cameraIndex);
+        final Camera rawCamera = open(cameraIndex);
         final Camera.Parameters params = rawCamera.getParameters();
 
-        final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
-        final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
-        params.setPreviewSize(selectedPreviewSize.width,
-                selectedPreviewSize.height);
+        //final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
+        //final Camera.Size selectedPreviewSize = new Camera.Size(width, height);
+
+        //final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
+
+        params.setPreviewSize(width, height);
+
+        /*params.setPreviewSize(selectedPreviewSize.width,
+                selectedPreviewSize.height);*/
 
         if (useFlashLight) {
             params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
@@ -243,7 +255,7 @@ final class CameraStreamer extends Object
         }
     }
 
-    private final Camera.PreviewCallback previewCallback = new Camera.PreviewCallback()
+    private final PreviewCallback previewCallback = new PreviewCallback()
     {
         @Override
         public void onPreviewFrame(final byte[] data, final Camera camera)
@@ -263,7 +275,7 @@ final class CameraStreamer extends Object
        final long timestampSeconds = timestamp / MILLI_PER_SECOND;
 
        // Update and log the frame rate
-       final long LOGS_PER_FRAME = 10L;
+       final long LOGS_PER_FRAME = 5L;
        numFrames++;
        if (lastTimestamp != Long.MIN_VALUE) {
            averageSpf.update(timestampSeconds - lastTimestamp);
@@ -285,6 +297,5 @@ final class CameraStreamer extends Object
        // I might be wrong, the documentation is not clear.
        camera.addCallbackBuffer(data);
    }
-
 }
 

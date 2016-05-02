@@ -84,11 +84,11 @@ public final class CamjpegPreferenceActivity extends PreferenceActivity
                     break;
                 default:
                     cameraFacing = "unknown";
-            } // switch
+            }
 
             entries[cameraIndex] = "Camara " + cameraIndex + " " + cameraFacing;
             entryValues[cameraIndex] = String.valueOf(cameraIndex);
-        } //for
+        }
 
         cameraPreference.setEntries(entries);
         cameraPreference.setEntryValues(entryValues);

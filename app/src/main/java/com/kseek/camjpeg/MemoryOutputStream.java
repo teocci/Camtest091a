@@ -3,6 +3,8 @@ package com.kseek.camjpeg;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import static com.kseek.camjpeg.utils.Utilities.LogV;
+
 final class MemoryOutputStream extends OutputStream
 {
     private final byte[] buffer;
@@ -11,7 +13,8 @@ final class MemoryOutputStream extends OutputStream
     MemoryOutputStream(final int size)
     {
         this(new byte[size]);
-    } // constructor(int)
+        LogV("FPS: " + size);
+    }
 
     MemoryOutputStream(final byte[] newBuffer)
     {

@@ -19,7 +19,7 @@ android {
 }
 
 dependencies {
-    compile group: 'org.nanohttpd', name: 'nanohttpd', version: '2.2.0'
+    //compile group: 'org.nanohttpd', name: 'nanohttpd', version: '2.2.0'
 }
 
 
