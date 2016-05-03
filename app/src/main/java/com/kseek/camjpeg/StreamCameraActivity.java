@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
@@ -71,8 +72,11 @@ public final class StreamCameraActivity extends Activity
 
 
 
-    private int width = 320;
-    private int height = 240;
+    private int width = 720;
+    private int height = 480;
+
+    private Utilities.Sized prefSize;
+    private Utilities.Sized screenSize;
 
     static int httpPort = 8080;
 
@@ -123,6 +127,7 @@ public final class StreamCameraActivity extends Activity
         lastMotionKeepAliveTime = System.currentTimeMillis();
         updatePrefCacheAndUi();
         tryStartCameraStreamer();
+        // Lock screen
         wakeLock.acquire();
     }
 
@@ -145,7 +150,19 @@ public final class StreamCameraActivity extends Activity
     public void surfaceChanged(final SurfaceHolder holder, final int format,
                                final int width, final int height)
     {
-        // Ingored
+        /*int bitmapWidth = width;
+        int bitmapHeight = height;
+
+        int canvasWidth = width;
+        int canvasHeight = height;
+
+        try {
+            Bitmap canvasBitmap = Bitmap.createScaledBitmap(initialBitmap, (int) bitmapWidth, (int) bitmapHeight, true);
+            Canvas surfaceCanvas = new Canvas();
+            surfaceCanvas.setBitmap(canvasBitmap);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }*/
     }
 
     @Override
@@ -185,10 +202,12 @@ public final class StreamCameraActivity extends Activity
     {
         String resolutionString =
                 preferenceHelper
-                        .stringPreference(R.string.key_pref_resolution, "320x240");
+                        .stringPreference(R.string.key_pref_resolution, "720x480");
         String WnH[] = resolutionString.split("x");
         width = Integer.valueOf(WnH[0]);
         height = Integer.valueOf(WnH[1]);
+
+        prefSize = new Utilities.Sized(width, height);
     }
 
     public void releaseLocks()
@@ -196,7 +215,6 @@ public final class StreamCameraActivity extends Activity
         if (wakeLock != null) {
             // release lock for preview
             PowerManager.WakeLock tempWL = wakeLock;
-
             LogI("CamActivity WakeLock released!");
 
             if (tempWL.isHeld())
@@ -213,8 +231,8 @@ public final class StreamCameraActivity extends Activity
                     previewSizeIndex,
                     jpegQuality,
                     previewDisplay,
-                    width,
-                    height);
+                    prefSize,
+                    screenSize);
             cameraStreamer.start();
         }
     }
@@ -312,6 +330,14 @@ public final class StreamCameraActivity extends Activity
             jpegQuality = 100;
         }
 
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        int screenHeight = metrics.heightPixels;
+        int screenWidth = metrics.widthPixels;
+
+        screenSize = new Utilities.Sized(screenWidth, screenHeight);
+        //LogV("getWindowManager >> w: " + screenWidth + " h: " + screenHeight);
+
         displayIpAddress();
         getPreferedResolution();
         //mIpAddressView.setText("http://" + ipAddress + ":" + httpPort + "/");
@@ -355,7 +381,6 @@ public final class StreamCameraActivity extends Activity
         return getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_CAMERA_FLASH);
     }
-
 
 }
 

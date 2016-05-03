@@ -16,7 +16,7 @@ public final class MJpegHttpStreamer
     /** Default port for HTTPS. */
     public final static int DEFAULT_HTTPS_PORT = 8443;
 
-    private final static String UUID_MJPG = "gc0p4Jq0M2Yt08jU534c0p";
+    private final static String UUID_MJPG = "7b3cc56e5f51db803f790dad720ed50a";
     private final static String BOUNDARY_MJPG = "--" + UUID_MJPG;
 
     private final static String MINE_MJPG =
@@ -36,11 +36,8 @@ public final class MJpegHttpStreamer
 
     private final static byte EOL[] = {(byte) '\r', (byte) '\n'};
 
-    private final static String EOL_STRING = "\r\n";
-
-    private final static String BOUNDARY_LINES = "\r\n" + BOUNDARY_MJPG + "\r\n";
-
-    /*private static final String HTTP_HEADER =
+    /* private final static String BOUNDARY_LINES = "\r\n" + BOUNDARY_MJPG + "\r\n";
+    private static final String HTTP_HEADER =
         "HTTP/1.0 200 OK\r\n"
         + "Server: Camtest\r\n"
         + "Connection: close\r\n"
@@ -204,12 +201,13 @@ public final class MJpegHttpStreamer
                                     + "X-Timestamp:" + timestamp + "\r\n"
                                     + "\r\n"
                     );*/
-                    headerBoundaryLine(stream);
+
                     headerJPG(stream, length, timestamp);
                     stream.write(buffer, 0, length);  /* the 0 is the offset */
-                    //headerBoundaryLine(stream);
+                    headerBoundaryLine(stream);
                     //stream.writeBytes(BOUNDARY_LINES);
                     stream.flush();
+                    //stream.write(buffer, 0, length);  /* the 0 is the offset */
                 }
             }
             catch (final IOException exceptionWhileStreaming) {
@@ -247,35 +245,28 @@ public final class MJpegHttpStreamer
     protected void headerSTATUS(DataOutputStream ps) throws IOException
     {
         ps.writeBytes("HTTP/1.0 200 OK");
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
     }
 
     protected void headerMJPG(DataOutputStream ps) throws IOException
     {
         ps.writeBytes("Connection: Close");
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes("Server: MJPG-Streamer");
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes(MAX_AGE);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes(EXPIRES);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes(CACHE_CONTROL);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes(PRAGMA);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         //String dateString = new Date().toString();
 
@@ -286,34 +277,34 @@ public final class MJpegHttpStreamer
         //ps.write(EOL);
 
         ps.writeBytes(ACCESS_CONTROL);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes("Content-Type: " + MINE_MJPG);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
+
+        ps.write(EOL);
+        ps.writeBytes(BOUNDARY_MJPG);
+        ps.write(EOL);
     }
 
     protected void headerJPG(DataOutputStream ps, int length, long timestamp) throws IOException
     {
         ps.writeBytes("Content-Type: image/jpeg");
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes("Content-Length: " + length);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
+        ps.write(EOL);
 
         ps.writeBytes("X-Timestamp: " + timestamp);
-        ps.writeBytes(EOL_STRING);
-        ps.writeBytes(EOL_STRING);
-        //ps.write(EOL);
-        //ps.write(EOL);
+        ps.write(EOL);
+        ps.write(EOL);
     }
 
     protected void headerBoundaryLine(DataOutputStream ps) throws IOException
     {
-        ps.writeBytes(BOUNDARY_LINES);
+        ps.write(EOL);
+        ps.writeBytes(BOUNDARY_MJPG);
+        ps.write(EOL);
     }
 
     private void acceptAndStream() throws IOException

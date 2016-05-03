@@ -12,7 +12,7 @@
             android:title="@string/resolution"
             android:summary="@string/help_resolution"
             android:key="@string/key_pref_resolution"
-            android:defaultValue="320x240"
+            android:defaultValue="720x480"
             android:entries="@array/resolutions"
             android:entryValues="@array/resolutions"
             />

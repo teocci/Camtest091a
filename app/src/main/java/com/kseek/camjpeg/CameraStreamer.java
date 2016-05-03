@@ -29,11 +29,13 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.kseek.camjpeg.net.http.MJpegHttpStreamer;
+import com.kseek.camjpeg.utils.Utilities;
 
 import java.io.IOException;
 import java.util.List;
 
-import static android.hardware.Camera.*;
+import static android.hardware.Camera.PreviewCallback;
+import static android.hardware.Camera.open;
 
 final class CameraStreamer extends Object
 {
@@ -52,9 +54,12 @@ final class CameraStreamer extends Object
     private final int httpPort;
     private final int previewSizeIndex;
     private final int jpegQuality;
-    private final SurfaceHolder previewDisplay;
-    private int width = Integer.MIN_VALUE;
-    private int height = Integer.MIN_VALUE;
+    private SurfaceHolder previewDisplay;
+    //private int width = Integer.MIN_VALUE;
+    //private int height = Integer.MIN_VALUE;
+
+    private Utilities.Sized prefSize;
+    private Utilities.Sized screenSize;
 
     private boolean running = false;
     private Looper looper = null;
@@ -73,7 +78,9 @@ final class CameraStreamer extends Object
     private long lastTimestamp = Long.MIN_VALUE;
 
     public CameraStreamer(final int cameraIndex, final boolean useFlashLight, final int httpPort,
-            final int previewSizeIndex, final int jpegQuality, final SurfaceHolder previewDisplay, final int width, final int height)
+                          final int previewSizeIndex, final int jpegQuality, SurfaceHolder
+                                  previewDisplay, final Utilities.Sized prefSize, final Utilities
+            .Sized screenSize)
     {
         super();
 
@@ -87,8 +94,8 @@ final class CameraStreamer extends Object
         this.previewSizeIndex = previewSizeIndex;
         this.jpegQuality = jpegQuality;
         this.previewDisplay = previewDisplay;
-        this.width = width;
-        this.height = height;
+        this.prefSize = prefSize;
+        this.screenSize = screenSize;
     }
 
     private final class WorkHandler extends Handler
@@ -138,9 +145,9 @@ final class CameraStreamer extends Object
     }
 
     /**
-     *  Stop the image streamer. The camera will be released during the
-     *  execution of stop() or shortly after it returns. stop() should
-     *  be called on the main thread.
+     * Stop the image streamer. The camera will be released during the
+     * execution of stop() or shortly after it returns. stop() should
+     * be called on the main thread.
      */
     public void stop()
     {
@@ -165,13 +172,11 @@ final class CameraStreamer extends Object
     {
         try {
             startStreamingIfRunning();
-        }
-        catch (final RuntimeException openCameraFailed){
+        } catch (final RuntimeException openCameraFailed) {
             Log.d(TAG, "Open camera failed, retying in " + OPEN_CAMERA_POLL_INTERVAL_MS
                     + "ms", openCameraFailed);
             Thread.sleep(OPEN_CAMERA_POLL_INTERVAL_MS);
-        }
-        catch (final Exception startPreviewFailed) {
+        } catch (final Exception startPreviewFailed) {
             // Captures the IOException from startStreamingIfRunning and
             // the InterruptException from Thread.sleep.
             Log.w(TAG, "Failed to start camera preview", startPreviewFailed);
@@ -184,15 +189,19 @@ final class CameraStreamer extends Object
         final Camera rawCamera = open(cameraIndex);
         final Camera.Parameters params = rawCamera.getParameters();
 
-        //final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
-        //final Camera.Size selectedPreviewSize = new Camera.Size(width, height);
-
+        final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
         //final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
 
-        params.setPreviewSize(width, height);
+        final Camera.Size selectedPreviewSize = getOptimalPreviewSize(supportedPreviewSizes,
+                prefSize);
 
-        /*params.setPreviewSize(selectedPreviewSize.width,
-                selectedPreviewSize.height);*/
+        //final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
+        //params.setPreviewSize(width, height);
+
+        params.setPreviewSize(selectedPreviewSize.width,
+                selectedPreviewSize.height);
+
+        rawCamera.setParameters(params);
 
         if (useFlashLight) {
             params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
@@ -218,12 +227,26 @@ final class CameraStreamer extends Object
         previewWidth = previewSize.width;
         previewHeight = previewSize.height;
 
+
+        final Utilities.Sized full = getFullSize(screenSize, prefSize);
+
+        previewDisplay.setFixedSize(full.width, full.height);
+
+        /*LogV("firstPreviewSize >> w: " + firstPreviewSize.width + " h: " + firstPreviewSize
+        .height);
+        LogV("selectedPreviewSize >> w: " + selectedPreviewSize.width + " h: " +
+                selectedPreviewSize.height);
+        LogV("previewSize >> w: " + previewSize.width + " h: " + previewSize.height);*/
+
         final int BITS_PER_BYTE = 8;
         final int bytesPerPixel = ImageFormat.getBitsPerPixel(previewFormat) / BITS_PER_BYTE;
-        // XXX: According to the documentation the buffer size can be calculated by width * height * bytesPerPixel.
-        // However, this returned an error saying it was too small. It always needed to be exactly 1.5 times larger.
+        // XXX: According to the documentation the buffer size can be calculated by width *
+        // height * bytesPerPixel.
+        // However, this returned an error saying it was too small. It always needed to be
+        // exactly 1.5 times larger.
         previewBufferSize = previewWidth * previewHeight * bytesPerPixel * 3 / 2 + 1;
         rawCamera.addCallbackBuffer(new byte[previewBufferSize]);
+
         previewRect = new Rect(0, 0, previewWidth, previewHeight);
         rawCamera.setPreviewCallbackWithBuffer(previewCallback);
 
@@ -242,8 +265,7 @@ final class CameraStreamer extends Object
 
             try {
                 rawCamera.setPreviewDisplay(previewDisplay);
-            }
-            catch (final IOException e) {
+            } catch (final IOException e) {
                 streamer.stop();
                 rawCamera.release();
                 throw e;
@@ -255,6 +277,54 @@ final class CameraStreamer extends Object
         }
     }
 
+    private Utilities.Sized getFullSize(Utilities.Sized targetSize, Utilities.Sized baseSize)
+    {
+        double targetRatio = (double) baseSize.width / baseSize.height;
+        //LogV("targetRatio: " + targetRatio);
+
+        int targetHeight = targetSize.height;
+
+        int targetWidth = (int) (targetRatio * targetHeight);
+
+        //LogV("getFullSize >> w: " + targetWidth + " h: " + targetHeight);
+
+        return new Utilities.Sized(targetWidth, targetHeight);
+    }
+
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, Utilities.Sized pref)
+    {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) pref.height / pref.width;
+
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = pref.height;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            //LogV("getOptimalPreviewSize >> w: " + size.width + " h: " + size.height);
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+
     private final PreviewCallback previewCallback = new PreviewCallback()
     {
         @Override
@@ -263,39 +333,41 @@ final class CameraStreamer extends Object
             final Long timestamp = SystemClock.elapsedRealtime();
             final Message message = workHandler.obtainMessage();
             message.what = MESSAGE_SEND_PREVIEW_FRAME;
-            message.obj = new Object[]{ data, camera, timestamp };
+            message.obj = new Object[]{data, camera, timestamp};
             message.sendToTarget();
         }
     };
 
-   private void sendPreviewFrame(final byte[] data, final Camera camera, final long timestamp)
-   {
-       // Calculate the timestamp
-       final long MILLI_PER_SECOND = 1000L;
-       final long timestampSeconds = timestamp / MILLI_PER_SECOND;
+    private void sendPreviewFrame(final byte[] data, final Camera camera, final long timestamp)
+    {
+        // Calculate the timestamp
+        final long MILLI_PER_SECOND = 1000L;
+        final long timestampSeconds = timestamp / MILLI_PER_SECOND;
 
-       // Update and log the frame rate
-       final long LOGS_PER_FRAME = 5L;
-       numFrames++;
-       if (lastTimestamp != Long.MIN_VALUE) {
-           averageSpf.update(timestampSeconds - lastTimestamp);
-           if (numFrames % LOGS_PER_FRAME == LOGS_PER_FRAME - 1) {
-               Log.d(TAG, "FPS: " + 1.0 / averageSpf.getAverage());
-           }
-       }
+        // Update and log the frame rate
+        final long LOGS_PER_FRAME = 5L;
+        numFrames++;
+        if (lastTimestamp != Long.MIN_VALUE) {
+            averageSpf.update(timestampSeconds - lastTimestamp);
+            if (numFrames % LOGS_PER_FRAME == LOGS_PER_FRAME - 1) {
+                Log.d(TAG, "FPS: " + 1.0 / averageSpf.getAverage());
+            }
+        }
 
-       lastTimestamp = timestampSeconds;
-       // Create JPEG
-       final YuvImage image = new YuvImage(data, previewFormat, previewWidth, previewHeight, null);
-       image.compressToJpeg(previewRect, jpegQuality, jpegOutputStream);
+        lastTimestamp = timestampSeconds;
+        // Create JPEG
+        final YuvImage image = new YuvImage(data, previewFormat, previewWidth, previewHeight, null);
+        image.compressToJpeg(previewRect, jpegQuality, jpegOutputStream);
 
-       jpegHttpStreamer.streamJpeg(jpegOutputStream.getBuffer(), jpegOutputStream.getLength(), timestamp);
+        jpegHttpStreamer.streamJpeg(jpegOutputStream.getBuffer(), jpegOutputStream.getLength(),
+                timestamp);
 
-       // Clean up
-       jpegOutputStream.seek(0);
-       // XXX: I believe that this is thread-safe because we're not calling methods in other threads.
-       // I might be wrong, the documentation is not clear.
-       camera.addCallbackBuffer(data);
-   }
+        // Clean up
+        jpegOutputStream.seek(0);
+        // XXX: I believe that this is thread-safe because we're not calling methods in other
+        // threads.
+        // I might be wrong, the documentation is not clear.
+        camera.addCallbackBuffer(data);
+    }
 }
 
