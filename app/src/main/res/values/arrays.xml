@@ -13,6 +13,7 @@
         <item>640x480</item>
         <item>720x480</item>
         <item>800x480</item>
+        <item>1280x720</item>
     </string-array>
 
     <string-array name="quality">

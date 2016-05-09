@@ -36,6 +36,8 @@ import java.util.List;
 
 import static android.hardware.Camera.PreviewCallback;
 import static android.hardware.Camera.open;
+import static com.kseek.camjpeg.utils.Utilities.LogE;
+import static com.kseek.camjpeg.utils.Utilities.LogV;
 
 final class CameraStreamer extends Object
 {
@@ -50,37 +52,45 @@ final class CameraStreamer extends Object
     private final MovingAverage averageSpf = new MovingAverage(50); /* numValues */
 
     private final int cameraIndex;
-    private final boolean useFlashLight;
     private final int httpPort;
     private final int previewSizeIndex;
     private final int jpegQuality;
+
+    private StreamCameraActivity mainActivity;
     private SurfaceHolder previewDisplay;
+    private Looper looper = null;
+    private Handler workHandler = null;
+    private Camera camera = null;
+    private Rect previewRect = null;
     //private int width = Integer.MIN_VALUE;
     //private int height = Integer.MIN_VALUE;
 
     private Utilities.Sized prefSize;
     private Utilities.Sized screenSize;
 
+    private boolean useFlashLight;
     private boolean running = false;
-    private Looper looper = null;
-    private Handler workHandler = null;
-    private Camera camera = null;
-    private int previewFormat = Integer.MIN_VALUE;
-    private int previewWidth = Integer.MIN_VALUE;
-    private int previewHeight = Integer.MIN_VALUE;
-    private Rect previewRect = null;
-    private int previewBufferSize = Integer.MIN_VALUE;
+
     private MemoryOutputStream jpegOutputStream = null;
     private MJpegHttpStreamer jpegHttpStreamer = null;
 
+    private int previewBufferSize = Integer.MIN_VALUE;
+    private int previewFormat = Integer.MIN_VALUE;
+    private int previewWidth = Integer.MIN_VALUE;
+    private int previewHeight = Integer.MIN_VALUE;
 
     private long numFrames = 0L;
     private long lastTimestamp = Long.MIN_VALUE;
 
-    public CameraStreamer(final int cameraIndex, final boolean useFlashLight, final int httpPort,
-                          final int previewSizeIndex, final int jpegQuality, SurfaceHolder
-                                  previewDisplay, final Utilities.Sized prefSize, final Utilities
-            .Sized screenSize)
+    public CameraStreamer(final int cameraIndex,
+                          final boolean useFlashLight,
+                          final int httpPort,
+                          final int previewSizeIndex,
+                          final int jpegQuality,
+                          final SurfaceHolder previewDisplay,
+                          final Utilities.Sized prefSize,
+                          final Utilities.Sized screenSize,
+                          StreamCameraActivity mainActivity)
     {
         super();
 
@@ -96,6 +106,7 @@ final class CameraStreamer extends Object
         this.previewDisplay = previewDisplay;
         this.prefSize = prefSize;
         this.screenSize = screenSize;
+        this.mainActivity = mainActivity;
     }
 
     private final class WorkHandler extends Handler
@@ -173,32 +184,38 @@ final class CameraStreamer extends Object
         try {
             startStreamingIfRunning();
         } catch (final RuntimeException openCameraFailed) {
-            Log.d(TAG, "Open camera failed, retying in " + OPEN_CAMERA_POLL_INTERVAL_MS
-                    + "ms", openCameraFailed);
+            LogV("Open camera failed, retying in "
+                    + OPEN_CAMERA_POLL_INTERVAL_MS
+                    + "ms | " + openCameraFailed);
             Thread.sleep(OPEN_CAMERA_POLL_INTERVAL_MS);
         } catch (final Exception startPreviewFailed) {
             // Captures the IOException from startStreamingIfRunning and
             // the InterruptException from Thread.sleep.
-            Log.w(TAG, "Failed to start camera preview", startPreviewFailed);
+            LogE("Failed to start camera preview | " + startPreviewFailed);
         }
     }
+
+
 
     private void startStreamingIfRunning() throws IOException
     {
         // Throws RuntimeException if the camera is currently opened by another application.
+
+        LogV("cameraIndex: " + cameraIndex);
         final Camera rawCamera = open(cameraIndex);
         final Camera.Parameters params = rawCamera.getParameters();
 
         final List<Camera.Size> supportedPreviewSizes = params.getSupportedPreviewSizes();
         //final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
 
-        final Camera.Size selectedPreviewSize = getOptimalPreviewSize(supportedPreviewSizes,
-                prefSize);
+        final Camera.Size selectedPreviewSize =
+                getOptimalPreviewSize(supportedPreviewSizes, prefSize);
 
         //final Camera.Size selectedPreviewSize = supportedPreviewSizes.get(previewSizeIndex);
         //params.setPreviewSize(width, height);
 
-        params.setPreviewSize(selectedPreviewSize.width,
+        params.setPreviewSize(
+                selectedPreviewSize.width,
                 selectedPreviewSize.height);
 
         rawCamera.setParameters(params);
@@ -210,12 +227,14 @@ final class CameraStreamer extends Object
         // Set Preview FPS range. The range with the greatest maximum is returned first.
         final List<int[]> supportedPreviewFpsRanges = params.getSupportedPreviewFpsRange();
 
-        // XXX: However sometimes it returns null. This is a known bug
+        // Sometimes it returns null. This is a known bug
         // https://code.google.com/p/android/issues/detail?id=6271
         // In which case, we just don't set it.
+
         if (supportedPreviewFpsRanges != null) {
             final int[] range = supportedPreviewFpsRanges.get(0);
-            params.setPreviewFpsRange(range[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
+            params.setPreviewFpsRange(
+                    range[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
                     range[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]);
             rawCamera.setParameters(params);
         }
@@ -227,10 +246,9 @@ final class CameraStreamer extends Object
         previewWidth = previewSize.width;
         previewHeight = previewSize.height;
 
-
         final Utilities.Sized full = getFullSize(screenSize, prefSize);
 
-        previewDisplay.setFixedSize(full.width, full.height);
+        //mainActivity.setFixedSize(full.width, full.height);
 
         /*LogV("firstPreviewSize >> w: " + firstPreviewSize.width + " h: " + firstPreviewSize
         .height);
@@ -240,11 +258,12 @@ final class CameraStreamer extends Object
 
         final int BITS_PER_BYTE = 8;
         final int bytesPerPixel = ImageFormat.getBitsPerPixel(previewFormat) / BITS_PER_BYTE;
-        // XXX: According to the documentation the buffer size can be calculated by width *
-        // height * bytesPerPixel.
+
+        // Note: According to the documentation the buffer size can be calculated by:
+        // width * height * bytesPerPixel.
         // However, this returned an error saying it was too small. It always needed to be
         // exactly 1.5 times larger.
-        previewBufferSize = previewWidth * previewHeight * bytesPerPixel * 3 / 2 + 1;
+        previewBufferSize = previewWidth * previewHeight * bytesPerPixel * 3 / 2;
         rawCamera.addCallbackBuffer(new byte[previewBufferSize]);
 
         previewRect = new Rect(0, 0, previewWidth, previewHeight);
@@ -305,7 +324,7 @@ final class CameraStreamer extends Object
 
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
-            //LogV("getOptimalPreviewSize >> w: " + size.width + " h: " + size.height);
+            LogV("getOptimalPreviewSize >> w: " + size.width + " x h: " + size.height);
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
             if (Math.abs(size.height - targetHeight) < minDiff) {
                 optimalSize = size;

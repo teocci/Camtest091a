@@ -26,7 +26,7 @@ import com.kseek.camjpeg.utils.Utilities;
 
 import java.util.Locale;
 
-import static com.kseek.camjpeg.utils.Utilities.LogI;
+import static com.kseek.camjpeg.utils.Utilities.LogV;
 
 public final class StreamCameraActivity extends Activity
         implements SurfaceHolder.Callback
@@ -40,15 +40,13 @@ public final class StreamCameraActivity extends Activity
 
     public TextView statusTextView = null;
 
-    private StreamCameraActivity mainActivity = this;
-
     //private ImageGraph mImageGraph;
 
     private PreferenceHelper preferenceHelper;
     private SharedPreferences sharedPreferences;
 
     private CamjpegApplication mainApplication;
-
+    //private StreamCameraActivity mainActivity = this;
 
     private MenuItem mSettingsMenuItem = null;
     private WakeLock wakeLock = null;
@@ -71,9 +69,8 @@ public final class StreamCameraActivity extends Activity
     private int previewSizeIndex = 0;
 
 
-
-    private int width = 720;
-    private int height = 480;
+    private int width = 800;
+    private int height = 450;
 
     private Utilities.Sized prefSize;
     private Utilities.Sized screenSize;
@@ -100,8 +97,10 @@ public final class StreamCameraActivity extends Activity
 
         new LoadPreferencesTask().execute();
 
-        statusTextView = (TextView)findViewById(R.id.tv_status);
+        statusTextView = (TextView) findViewById(R.id.tv_status);
 
+        // Configure the SurfaceView.  This will start the Renderer thread, with an
+        // appropriate EGL context.
         previewDisplay = ((SurfaceView) findViewById(R.id.camera)).getHolder();
         previewDisplay.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         previewDisplay.addCallback(this);
@@ -110,7 +109,6 @@ public final class StreamCameraActivity extends Activity
 
         final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, WAKE_LOCK_TAG);
-
     }
 
     @Override
@@ -150,6 +148,7 @@ public final class StreamCameraActivity extends Activity
     public void surfaceChanged(final SurfaceHolder holder, final int format,
                                final int width, final int height)
     {
+        LogV("onSurfaceChanged " + width + "x" + height);
         /*int bitmapWidth = width;
         int bitmapHeight = height;
 
@@ -157,7 +156,8 @@ public final class StreamCameraActivity extends Activity
         int canvasHeight = height;
 
         try {
-            Bitmap canvasBitmap = Bitmap.createScaledBitmap(initialBitmap, (int) bitmapWidth, (int) bitmapHeight, true);
+            Bitmap canvasBitmap = Bitmap.createScaledBitmap(initialBitmap, (int) bitmapWidth,
+            (int) bitmapHeight, true);
             Canvas surfaceCanvas = new Canvas();
             surfaceCanvas.setBitmap(canvasBitmap);
         } catch (Exception exception) {
@@ -202,7 +202,7 @@ public final class StreamCameraActivity extends Activity
     {
         String resolutionString =
                 preferenceHelper
-                        .stringPreference(R.string.key_pref_resolution, "720x480");
+                        .stringPreference(R.string.key_pref_resolution, "800x450");
         String WnH[] = resolutionString.split("x");
         width = Integer.valueOf(WnH[0]);
         height = Integer.valueOf(WnH[1]);
@@ -215,7 +215,7 @@ public final class StreamCameraActivity extends Activity
         if (wakeLock != null) {
             // release lock for preview
             PowerManager.WakeLock tempWL = wakeLock;
-            LogI("CamActivity WakeLock released!");
+            LogV("CamActivity WakeLock released!");
 
             if (tempWL.isHeld())
                 tempWL.release();
@@ -232,7 +232,7 @@ public final class StreamCameraActivity extends Activity
                     jpegQuality,
                     previewDisplay,
                     prefSize,
-                    screenSize);
+                    screenSize, this);
             cameraStreamer.start();
         }
     }
@@ -245,13 +245,18 @@ public final class StreamCameraActivity extends Activity
         }
     }
 
+    public void setFixedSize(int width, int height)
+    {
+        previewDisplay.setFixedSize(width, height);
+    }
+
     private final class LoadPreferencesTask
             extends AsyncTask<Void, Void, SharedPreferences>
     {
         private LoadPreferencesTask()
         {
             super();
-        } // constructor()
+        }
 
         @Override
         protected SharedPreferences doInBackground(final Void... noParams)
@@ -281,7 +286,7 @@ public final class StreamCameraActivity extends Activity
                     updatePrefCacheAndUi();
                 } // onSharedPreferenceChanged(SharedPreferences, String)
 
-            }; // mSharedPreferencesListener
+            };
 
     private final int getPrefInt(final String key, final int defValue)
     {
@@ -299,7 +304,7 @@ public final class StreamCameraActivity extends Activity
     private final void updatePrefCacheAndUi()
     {
         cameraIndex = preferenceHelper
-                .booleanPreference(R.string.key_pref_camera_index_def, false) ? 0 : 1;
+                .booleanPreference(R.string.key_pref_camera_index_def, false) ? 1 : 0;
 
         useFlashLight = (!hasFlashLight()) ? false : preferenceHelper
                 .booleanPreference(R.string.key_pref_flash_light_def, false);
@@ -321,7 +326,7 @@ public final class StreamCameraActivity extends Activity
 
         jpegQuality = preferenceHelper
                 .intPreference(R.string.key_pref_jpeg_quality,
-                jpegQuality);
+                        jpegQuality);
 
         // The JPEG quality must be in the range [0 100]
         if (jpegQuality < 0) {

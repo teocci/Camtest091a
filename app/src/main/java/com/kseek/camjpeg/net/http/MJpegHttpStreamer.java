@@ -16,6 +16,7 @@ public final class MJpegHttpStreamer
     /** Default port for HTTPS. */
     public final static int DEFAULT_HTTPS_PORT = 8443;
 
+    /** Default String for our Boundary. */
     private final static String UUID_MJPG = "gc0p4Jq0M2Yt08jU534c0p";
     private final static String BOUNDARY_MJPG = "--" + UUID_MJPG;
 
@@ -246,7 +247,7 @@ public final class MJpegHttpStreamer
 
     protected void headerSTATUS(DataOutputStream ps) throws IOException
     {
-        ps.writeBytes("HTTP/1.0 200 OK");
+        ps.writeBytes("HTTP/2.0 200 OK");
         ps.writeBytes(EOL_STRING);
         //ps.write(EOL);
     }

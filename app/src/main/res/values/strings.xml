@@ -102,7 +102,7 @@
 
     <string name="camera_preferences">Camera Options</string>
     <string name="frontcam_on">Use Front Cam</string>
-    <string name="help_frontcam">Use the Front Camera, which facing is the same as that of the screen.</string>
+    <string name="help_frontcam">Use the Front Camera, which is facing same as the screen of your phone.</string>
     <string name="flash_light">Flash Light</string>
     <string name="help_flash_light">Activate the flash Light</string>
 
